@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.6.33829.357
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConsoleApp_Server", "ConsoleWpfApp_Chat\ConsoleApp_Server.csproj", "{5280ED72-6327-4D10-9404-B49019AD6942}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WpfApp_Client", "WpfApp_Client\WpfApp_Client.csproj", "{C34F10B9-010B-49BC-B10A-681AE4B141DD}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{5280ED72-6327-4D10-9404-B49019AD6942}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5280ED72-6327-4D10-9404-B49019AD6942}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5280ED72-6327-4D10-9404-B49019AD6942}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5280ED72-6327-4D10-9404-B49019AD6942}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C34F10B9-010B-49BC-B10A-681AE4B141DD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C34F10B9-010B-49BC-B10A-681AE4B141DD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C34F10B9-010B-49BC-B10A-681AE4B141DD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C34F10B9-010B-49BC-B10A-681AE4B141DD}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {7C9D48FE-D690-4BE0-9722-54E3BBC595F9}
+	EndGlobalSection
+EndGlobal
