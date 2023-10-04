@@ -8,10 +8,83 @@
         Title="MainWindow" Height="450" Width="800"
         Closing="Window_Closing">
     <Grid>
-        <StackPanel Orientation="Vertical" HorizontalAlignment="Center" VerticalAlignment="Center" Width="200">
-            <TextBox x:Name="txtIp" Text="10.1.0.7:11000"/>
-            <Line Height="10"></Line>
-            <Button Content="Connettiti" Click="Button_Click"/>
-        </StackPanel>
+        <Grid Visibility="Visible" d:Visibility="Hidden" x:Name="grdConnect" HorizontalAlignment="Center" VerticalAlignment="Center" >
+            <StackPanel Orientation="Vertical" Width="200">
+
+
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width=".5*"/>
+                        <ColumnDefinition/>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition/>
+                        <RowDefinition/>
+                        <RowDefinition/>
+                    </Grid.RowDefinitions>
+                    
+                    <Label Content="Nickname" Grid.Column="0"/>
+                    <TextBox x:Name="txtNick" MinWidth="50" Grid.Column="1"/>
+
+                    <Line Height="3" Grid.Row="1"/>
+
+                    <Label Content="Ip:Porta" Grid.Column="0" Grid.Row="2"/>
+                    <TextBox x:Name="txtIp" Text="10.1.0.7:11000" Grid.Column="1" Grid.Row="2"/>
+                </Grid>
+            
+                
+                
+                <Line Height="10"/>
+                <Button Content="Connettiti" Click="btnConnect_Click"/>
+            </StackPanel>
+        </Grid>
+        <Grid x:Name="grdChat" d:Visibility="Visible" Visibility="Collapsed">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width=".2*"/>
+                <ColumnDefinition/>
+            </Grid.ColumnDefinitions>
+
+            <Grid Name="grdPartecipants" Grid.Column="0">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height=".1*"/>
+                    <RowDefinition/>
+                </Grid.RowDefinitions>
+
+                <Label Content="Lista partecipanti" Grid.Row="0"/>
+                <ListBox x:Name="lstPartecipants" Grid.Row="1"/>
+
+
+
+            </Grid>
+
+            <Grid Grid.Column="1">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height=".5*"/>
+                    <RowDefinition Height="70"/>
+                </Grid.RowDefinitions>
+                
+                <Grid Grid.Row="0" x:Name="grdViewZone" Width="500">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="35"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <Label Content="Chat" FontSize="20"/>
+                    <ListBox x:Name="lstChat" Grid.Row="1"/>
+                </Grid>
+                <Grid Grid.Row="1" x:Name="grdSendZone">
+                    <StackPanel Orientation="Vertical" HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <StackPanel Orientation="Horizontal">
+                            <Label Content="Messaggio: "/>
+                            <TextBox x:Name="txtMessaggio" MinWidth="100" MaxHeight="300"/>
+                        </StackPanel>
+                        <Line Height="10"/>
+                        <Button x:Name="btnSend" Content="Send" Click="btnSend_Click"/>
+                    </StackPanel>
+                </Grid>
+            </Grid>
+        </Grid>
+        
+        
+
     </Grid>
 </Window>
