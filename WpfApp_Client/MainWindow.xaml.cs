@@ -88,6 +88,11 @@ namespace WpfApp_Client
                     _connection.Shutdown(SocketShutdown.Both);
                     _connection.Close(); 
                 }
+                _connection = null;
+
+                lstChat.Items.Clear();
+                lstPartecipants.Items.Clear();
+                txtMessaggio.Text = "";
             }
         }
 
@@ -97,13 +102,22 @@ namespace WpfApp_Client
             {
                 try
                 {
-                    _connection.Send(Encoding.UTF8.GetBytes(txtMessaggio.Text + "<EOF>"));
+                    _connection.Send(Encoding.UTF8.GetBytes(ControllaMessaggio(txtMessaggio.Text) + "<EOF>"));
                 }
                 catch (Exception ex)
                 {
                     HandleSocketException(ex);
                 }
             }
+        }
+
+        private string ControllaMessaggio(string s)
+        {
+            return s.Replace("<", "/</").Replace(">","/>/");
+        }
+        static string RiformattaMessaggio(string s)
+        {
+            return s.Replace("/</", "<").Replace("/>/", ">");
         }
 
         private void HandleSocketException(Exception ex)
@@ -127,6 +141,7 @@ namespace WpfApp_Client
                         int byteRecFromServer = _connection.Receive(bytes);
                         msgFromServer += Encoding.UTF8.GetString(bytes, 0, byteRecFromServer);
                     } while (!msgFromServer.Contains("<EOF>"));
+
                 } 
                 catch
                 {
@@ -135,26 +150,39 @@ namespace WpfApp_Client
 
                 msgFromServer = msgFromServer.Replace("<EOF>", "");
 
-                if (msgFromServer.Contains("<JOIN>"))
+                if (msgFromServer.Contains("<LIST>"))
                 {
-                    msgFromServer = msgFromServer.Replace("<JOIN>", "");
-                    lstPartecipants.Items.Add(msgFromServer);
+                    msgFromServer = msgFromServer.Replace("<LIST>", "");
+                    string[] msgListSplitted = msgFromServer.Split('\n');
+                    Dispatcher.Invoke(() =>
+                    {
+                        lstPartecipants.Items.Clear();
+                        foreach (string line in msgListSplitted)
+                        {
+                            if (line.Trim() != "")
+                            {
+                                lstPartecipants.Items.Add(line.Replace("\n",""));
+                            }
+                        }
+                    });
                 }
-                if (msgFromServer.Contains("<QUIT>"))
+                else if (msgFromServer.Contains("<QUIT>"))
                 {
                     msgFromServer = msgFromServer.Replace("<QUIT>", "");
                     for (int i = 0; i < lstPartecipants.Items.Count; i++)
                     {
                         if (lstPartecipants.Items[i].ToString() == msgFromServer)
-                            lstPartecipants.Items.RemoveAt(i);
+                            Dispatcher.Invoke(() =>
+                            {
+                                lstPartecipants.Items.RemoveAt(i);
+                            });
                     }
                 }
-
-                if (msgFromServer != "")
+                else if (msgFromServer != "")
                 {
                     Dispatcher.Invoke(new Action(() =>
                     {
-                        lstChat.Items.Add(msgFromServer);
+                        lstChat.Items.Add(RiformattaMessaggio(msgFromServer));
                     }));
                 }
 

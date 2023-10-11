@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
+using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
@@ -15,17 +17,19 @@ namespace ConsoleWpfApp_Chat
         //          5°I
         // 
 
-        
-
-        static int PORT = 60100;
+        static int PORT = 11000;
         static string IP = "10.1.0.7";
         static int MAX_CLIENT = 10;
         static string QUIT_STRING = "c - l - o - s - i - n - g - 2 - 2 - 3 - 4 - 3<EOF>";
+
 
         // Fare classe per gestire la lista
         static List<Client> _oldClients = new List<Client>();
         static List<Client> _clients = new List<Client>();
 
+        // inserire lock per la coda dei messaggi
+
+        static object _lockQueue = new object();
         static Queue<Message> _messagesToBroadcast = new Queue<Message>();
 
 
@@ -85,19 +89,20 @@ namespace ConsoleWpfApp_Chat
         {
             do
             {
-                while (_messagesToBroadcast.Count > 0)
-                {
-                    Message msg = _messagesToBroadcast.Dequeue();
-                    Broadcast($"[{msg.SendTime}] <{msg.Author.Nickname}> {msg.Content}" + "<EOF>");
-                }
+                lock (_lockQueue)
+                    while (_messagesToBroadcast.Count > 0)
+                    {
+                        Message msg = _messagesToBroadcast.Dequeue();
+                        Broadcast($"[{msg.SendTime}] <{msg.Author.Nickname}> {msg.Content}" + "<EOF>");
+                    }
             } while (true);
         }
 
-        static void Broadcast(string strMsg)
+        static void Broadcast(string strMsg, Client except = null)
         {
             foreach (Client c in _clients)
             {
-                if (c.Handler.Connected)
+                if (except != c && c.Handler.Connected)
                 {
                     try
                     {
@@ -130,12 +135,20 @@ namespace ConsoleWpfApp_Chat
                 } while (!msgFromClient.Contains("<EOF>"));
                 #endregion
 
+                Console.WriteLine(msgFromClient);
+
                 if (msgFromClient.Contains("<NICKNAME>"))
                 {
                     msgFromClient = msgFromClient.Replace("<NICKNAME>", "").Replace("<EOF>","");
                     client.Nickname = msgFromClient;
                     Broadcast($"Nuovo utente nella chat: {client.Nickname}<EOF>");
-                    Broadcast($"<JOIN>{client.Nickname}<EOF>");
+
+                    string listParts = "";
+                    foreach (Client c in _clients)
+                    {
+                        listParts += c.Nickname + "\n";
+                    }
+                    Broadcast($"<LIST>"+listParts+"<EOF>");
                 }
                 else if (msgFromClient == QUIT_STRING)
                 {
@@ -144,16 +157,26 @@ namespace ConsoleWpfApp_Chat
                 }
                 else
                 {
-                    _messagesToBroadcast.Enqueue(
-                        new Message(client, msgFromClient)
-                    );
+                    lock (_lockQueue)
+                    {
+                        _messagesToBroadcast.Enqueue(
+                            new Message(client, msgFromClient)
+                        );
+                    }
                 }
 
+                
+
             } while (client.Handler.Connected);
+
+            _clients.Remove(client);
+            _oldClients.Add(client);
 
             Console.WriteLine("Client con id {0} disconnesso", client.ID);
             Broadcast($"Un utente è uscito dalla chat: {client.Nickname}<EOF>");
             Broadcast($"<QUIT>{client.Nickname}<EOF>");
         }
+
+        
     }
 }
