@@ -18,10 +18,9 @@ namespace ConsoleWpfApp_Chat
         // 
 
         static int PORT = 11000;
-        static string IP = "10.1.0.7";
+        static string IP = "192.168.1.61";
         static int MAX_CLIENT = 10;
-        static string QUIT_STRING = "c - l - o - s - i - n - g - 2 - 2 - 3 - 4 - 3<EOF>";
-
+        static string QUIT_STRING = "<CLOSE><EOF>";
 
         // Fare classe per gestire la lista
         static List<Client> _oldClients = new List<Client>();
@@ -32,6 +31,16 @@ namespace ConsoleWpfApp_Chat
         static object _lockQueue = new object();
         static Queue<Message> _messagesToBroadcast = new Queue<Message>();
 
+        /*
+         * Spiegazione TAG
+         * <EOF> End Of File, fine di un messaggio
+         * 
+         * <JOIN> Serve al server per capire quando un client richiede la modifica di un nickname
+         * 
+         * <LIST> Serve ai client per capire quando aggiornare la lista partecipanti
+         * <QUIT> Serve ai client per capire quando stampare che qualcuno ha abbandonato la chat
+         * 
+         */
 
         static void Main(string[] args)
         {
@@ -43,7 +52,7 @@ namespace ConsoleWpfApp_Chat
             #region Definizione Socket di ascolto
             
             IPAddress ipAddress = IPAddress.Parse(IP);
-
+            
             // Un end point è la combinazione di ip e porta
             IPEndPoint localEndPoint = new IPEndPoint(ipAddress, PORT);
 
@@ -137,18 +146,14 @@ namespace ConsoleWpfApp_Chat
 
                 Console.WriteLine(msgFromClient);
 
-                if (msgFromClient.Contains("<NICKNAME>"))
-                {
-                    msgFromClient = msgFromClient.Replace("<NICKNAME>", "").Replace("<EOF>","");
-                    client.Nickname = msgFromClient;
-                    Broadcast($"Nuovo utente nella chat: {client.Nickname}<EOF>");
 
-                    string listParts = "";
-                    foreach (Client c in _clients)
-                    {
-                        listParts += c.Nickname + "\n";
-                    }
-                    Broadcast($"<LIST>"+listParts+"<EOF>");
+                if (msgFromClient.Contains("<JOIN>"))
+                {
+                    msgFromClient = msgFromClient.Replace("<JOIN>", "").Replace("<EOF>", "");
+                    client.Nickname = msgFromClient;
+
+                    Broadcast($"Nuovo utente nella chat: {client.Nickname}<EOF>");
+                    UpdatePartecipantsList();
                 }
                 else if (msgFromClient == QUIT_STRING)
                 {
@@ -165,18 +170,27 @@ namespace ConsoleWpfApp_Chat
                     }
                 }
 
-                
-
             } while (client.Handler.Connected);
+
+            client.DataUscita = DateTime.Now;
 
             _clients.Remove(client);
             _oldClients.Add(client);
 
             Console.WriteLine("Client con id {0} disconnesso", client.ID);
             Broadcast($"Un utente è uscito dalla chat: {client.Nickname}<EOF>");
-            Broadcast($"<QUIT>{client.Nickname}<EOF>");
+            UpdatePartecipantsList();
         }
 
-        
+        private static void UpdatePartecipantsList()
+        {
+            string listParts = "";
+            foreach (Client c in _clients)
+            {
+                listParts += "[" + c.DataIngresso.ToString("HH/mm/ss") + "] " + c.Nickname + "\n";
+            }
+            Broadcast($"<LIST>" + listParts + "<EOF>");
+        }
+
     }
 }

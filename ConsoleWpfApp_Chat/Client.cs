@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Globalization;
 using System.Linq;
 using System.Net.Sockets;
 using System.Text;
@@ -24,12 +25,16 @@ namespace ConsoleWpfApp_Chat
                 nickname = "Anon_" + ID;
 
             Nickname = nickname;
+            DataIngresso = DateTime.Now;
         }
 
         public string Nickname { get; set; } 
         public int ID { get; }
         public Socket Handler { get; }
         public Thread Thread { get; set;  }
+
+        public DateTime DataIngresso { get; set; }
+        public DateTime DataUscita { get; set; }
 
     }
 }

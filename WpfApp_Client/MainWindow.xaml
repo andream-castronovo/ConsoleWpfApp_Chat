@@ -10,8 +10,6 @@
     <Grid>
         <Grid Visibility="Visible" d:Visibility="Hidden" x:Name="grdConnect" HorizontalAlignment="Center" VerticalAlignment="Center" >
             <StackPanel Orientation="Vertical" Width="200">
-
-
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width=".5*"/>

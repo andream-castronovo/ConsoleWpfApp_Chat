@@ -25,7 +25,7 @@ namespace WpfApp_Client
 
     public partial class MainWindow : Window
     {
-        const string QUIT_STRING = "c - l - o - s - i - n - g - 2 - 2 - 3 - 4 - 3<EOF>";
+        const string QUIT_STRING = "<CLOSE><EOF>";
 
         public MainWindow()
         {
@@ -34,6 +34,7 @@ namespace WpfApp_Client
 
         Socket _connection;
         Thread _listenToServer;
+        object _lockConnessione = new object();
 
         private void btnConnect_Click(object sender, RoutedEventArgs e)
         {
@@ -44,8 +45,9 @@ namespace WpfApp_Client
             IPEndPoint remoteEndPoint = new IPEndPoint(ipAddress, int.Parse(txtIp.Text.Split(':')[1]));
 
             // Creo la Socket che ascolterà
-            if (_connection  == null)
+            if (_connection == null)
             {
+                // Creo la socket
                 _connection = new Socket(
                     ipAddress.AddressFamily,
                     SocketType.Stream,
@@ -53,13 +55,17 @@ namespace WpfApp_Client
                 );
                 try
                 {
+                    // Mi connetto al server
                     _connection.Connect( remoteEndPoint );
                     
+                    // Creo e faccio partire il Thread che gestirà la ricezione dei dati dal server
                     _listenToServer = new Thread(ListenToServer);
                     _listenToServer.Start();
 
-                    _connection.Send(Encoding.UTF8.GetBytes($"<NICKNAME>{txtNick.Text}<EOF>"));
+                    // Invio al server la comunicazione dell'entrata nella chat, con anche il nickname
+                    _connection.Send(Encoding.UTF8.GetBytes($"<JOIN>{txtNick.Text.Trim()}<EOF>"));
 
+                    // Modifico l'interfaccia utente per 
                     grdConnect.Visibility = Visibility.Collapsed;
                     grdChat.Visibility = Visibility.Visible;
                 }
@@ -88,12 +94,18 @@ namespace WpfApp_Client
                     _connection.Shutdown(SocketShutdown.Both);
                     _connection.Close(); 
                 }
+
+                _listenToServer.Abort();
+
                 _connection = null;
 
                 lstChat.Items.Clear();
                 lstPartecipants.Items.Clear();
                 txtMessaggio.Text = "";
+
             }
+
+
         }
 
         private void btnSend_Click(object sender, RoutedEventArgs e)
@@ -123,6 +135,9 @@ namespace WpfApp_Client
         private void HandleSocketException(Exception ex)
         {
             MessageBox.Show($"{ex.Message}");
+
+            _connection = null;
+
             grdChat.Visibility = Visibility.Collapsed;
             grdConnect.Visibility = Visibility.Visible;
         }
@@ -134,18 +149,19 @@ namespace WpfApp_Client
             {
                 byte[] bytes = new byte[1024];
                 string msgFromServer = "";
+                
                 try
                 {
                     do
                     {
-                        int byteRecFromServer = _connection.Receive(bytes);
+                        int byteRecFromServer = _connection.Receive(bytes); // TODO C'è un errore quando chiudo uno dei due
                         msgFromServer += Encoding.UTF8.GetString(bytes, 0, byteRecFromServer);
                     } while (!msgFromServer.Contains("<EOF>"));
-
-                } 
-                catch
+                }
+                catch (SocketException ex)
                 {
-                    
+                    Console.WriteLine("Errore Socket: " + ex.Message);
+                    return;
                 }
 
                 msgFromServer = msgFromServer.Replace("<EOF>", "");
@@ -165,18 +181,6 @@ namespace WpfApp_Client
                             }
                         }
                     });
-                }
-                else if (msgFromServer.Contains("<QUIT>"))
-                {
-                    msgFromServer = msgFromServer.Replace("<QUIT>", "");
-                    for (int i = 0; i < lstPartecipants.Items.Count; i++)
-                    {
-                        if (lstPartecipants.Items[i].ToString() == msgFromServer)
-                            Dispatcher.Invoke(() =>
-                            {
-                                lstPartecipants.Items.RemoveAt(i);
-                            });
-                    }
                 }
                 else if (msgFromServer != "")
                 {
