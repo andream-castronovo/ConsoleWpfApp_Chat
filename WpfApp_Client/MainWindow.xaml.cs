@@ -1,19 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Net.Sockets;
 using System.Net;
 using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 using System.Threading;
 
 namespace WpfApp_Client
@@ -23,8 +12,29 @@ namespace WpfApp_Client
     /// </summary>
     /// 
 
+    /*  
+     *  TODO
+     *  
+     *   - Aggiunta di (You) nella lista partecipanti
+     *      - Comporta che il server invii al client (You) in aggiunta ad ognuno per il suo
+     *   - Display del proprio nome utente da qualche parte
+     *      - Abbastanza facile
+     *   - Tasto per disconnettersi
+     *      - Sarà praticamente lo stesso codice del Window_Closing
+     *   - Finestra informazioni utente al click nella list box dei partecipanti
+     *      - Comporta che il client avrà un oggetto Utente che avrà ogni volta la lista di tutti con le informazioni di ognuno
+     *   - Controllo dell'IP
+     *      - Split di . e split di : e controllo int
+     *   - Con tasto invio invia il messaggio
+     *   - Utente che non inserisce il nickname in modalità anonima
+     *  
+     */
+
+    
     public partial class MainWindow : Window
     {
+        static string _s = "";
+        
         const string QUIT_STRING = "<CLOSE><EOF>";
 
         public MainWindow()
@@ -65,7 +75,7 @@ namespace WpfApp_Client
                     // Invio al server la comunicazione dell'entrata nella chat, con anche il nickname
                     _connection.Send(Encoding.UTF8.GetBytes($"<JOIN>{txtNick.Text.Trim()}<EOF>"));
 
-                    // Modifico l'interfaccia utente per 
+                    // Modifico l'interfaccia utente per mostrare la sezione chat
                     grdConnect.Visibility = Visibility.Collapsed;
                     grdChat.Visibility = Visibility.Visible;
                 }
@@ -91,9 +101,11 @@ namespace WpfApp_Client
                 }
                 catch
                 {
-                    _connection.Shutdown(SocketShutdown.Both);
-                    _connection.Close(); 
+                    
                 }
+
+                _connection.Shutdown(SocketShutdown.Both);
+                _connection.Close();
 
                 _listenToServer.Abort();
 
@@ -177,7 +189,7 @@ namespace WpfApp_Client
                         {
                             if (line.Trim() != "")
                             {
-                                lstPartecipants.Items.Add(line.Replace("\n",""));
+                                lstPartecipants.Items.Add(line.Split(';'));
                             }
                         }
                     });

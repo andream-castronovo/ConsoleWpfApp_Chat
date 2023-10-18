@@ -1,13 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Diagnostics.Contracts;
-using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 
 namespace ConsoleWpfApp_Chat
 {
@@ -18,7 +14,7 @@ namespace ConsoleWpfApp_Chat
         // 
 
         static int PORT = 11000;
-        static string IP = "192.168.1.61";
+        static string IP = "10.1.0.7";
         static int MAX_CLIENT = 10;
         static string QUIT_STRING = "<CLOSE><EOF>";
 
@@ -31,6 +27,7 @@ namespace ConsoleWpfApp_Chat
         static object _lockQueue = new object();
         static Queue<Message> _messagesToBroadcast = new Queue<Message>();
 
+        static Thread _updateClients = new Thread(UpdateClients);
         /*
          * Spiegazione TAG
          * <EOF> End Of File, fine di un messaggio
@@ -38,9 +35,9 @@ namespace ConsoleWpfApp_Chat
          * <JOIN> Serve al server per capire quando un client richiede la modifica di un nickname
          * 
          * <LIST> Serve ai client per capire quando aggiornare la lista partecipanti
-         * <QUIT> Serve ai client per capire quando stampare che qualcuno ha abbandonato la chat
          * 
          */
+
 
         static void Main(string[] args)
         {
@@ -68,7 +65,7 @@ namespace ConsoleWpfApp_Chat
 
             #endregion
 
-            new Thread(UpdateClients).Start();
+            _updateClients.Start();
 
             try
             {
@@ -187,10 +184,10 @@ namespace ConsoleWpfApp_Chat
             string listParts = "";
             foreach (Client c in _clients)
             {
-                listParts += "[" + c.DataIngresso.ToString("HH/mm/ss") + "] " + c.Nickname + "\n";
+                listParts += $"{c.ID};{c.Nickname}\n";
             }
             Broadcast($"<LIST>" + listParts + "<EOF>");
         }
-
+        
     }
 }
