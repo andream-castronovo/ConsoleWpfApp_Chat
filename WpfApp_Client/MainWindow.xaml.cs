@@ -48,7 +48,7 @@ namespace WpfApp_Client
         Socket _connection;
         Thread _listenToServer;
         object _lockConnessione = new object();
-        Dictionary<int, string> _partecipants;
+        List<Tuple<int, string>> _partecipants;
 
         private void btnConnect_Click(object sender, RoutedEventArgs e)
         {
@@ -120,8 +120,6 @@ namespace WpfApp_Client
                 txtMessaggio.Text = "";
 
             }
-
-
         }
 
         private void btnSend_Click(object sender, RoutedEventArgs e)
@@ -189,7 +187,7 @@ namespace WpfApp_Client
                     Dispatcher.Invoke(() =>
                     {
                         lstPartecipants.Items.Clear();
-                        _partecipants = new Dictionary<int, string>();
+                        _partecipants = new List<Tuple<int, string>>();
 
                         Random rnd = new Random();
                         foreach (string line in msgListSplitted)
@@ -208,7 +206,11 @@ namespace WpfApp_Client
                                 int id = int.Parse(lineEdited.Split(';')[0]);
                                 string name = lineEdited.Split(';')[1].Replace($"/{code}/",";"); // risostituisco per output
 
-                                _partecipants.Add(id,name);
+                                // TODO Finire, devo fare che al click dice informazioni sul partecipante
+                                // quindi devo cercare un modo di collegare la listbox e l'id del client.
+
+
+                                //_partecipants.Add(new Tuple<int,string>());
 
                                 lstPartecipants.Items.Add(name);
                             }
@@ -228,7 +230,8 @@ namespace WpfApp_Client
 
         private void lstPartecipants_Selected(object sender, RoutedEventArgs e)
         {
-
+            Tuple<int, string> partecipante = new Tuple<int, string>();
+            MessageBox.Show($"Nome: {}", "Info sul partecipante");
         }
     }
 }
