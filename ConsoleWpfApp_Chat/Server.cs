@@ -184,7 +184,7 @@ namespace ConsoleWpfApp_Chat
             string listParts = "";
             foreach (Client c in _clients)
             {
-                listParts += $"{c.ID};{c.Nickname}\n";
+                listParts += $"{c.ID};{c.Nickname.Replace(";","/;/")}\n";
             }
             Broadcast($"<LIST>" + listParts + "<EOF>");
         }

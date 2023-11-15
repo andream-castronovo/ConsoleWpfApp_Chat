@@ -4,6 +4,9 @@ using System.Net;
 using System.Text;
 using System.Windows;
 using System.Threading;
+using System.Collections.Generic;
+using System.Windows.Input;
+using System.Windows.Media.Animation;
 
 namespace WpfApp_Client
 {
@@ -45,6 +48,7 @@ namespace WpfApp_Client
         Socket _connection;
         Thread _listenToServer;
         object _lockConnessione = new object();
+        Dictionary<int, string> _partecipants;
 
         private void btnConnect_Click(object sender, RoutedEventArgs e)
         {
@@ -185,11 +189,28 @@ namespace WpfApp_Client
                     Dispatcher.Invoke(() =>
                     {
                         lstPartecipants.Items.Clear();
+                        _partecipants = new Dictionary<int, string>();
+
+                        Random rnd = new Random();
                         foreach (string line in msgListSplitted)
                         {
-                            if (line.Trim() != "")
+                            string lineEdited = line.Trim();
+
+                            // Per evitare che se un utente usa ";" nel suo nickname ci siano casini.
+                            string code = rnd.Next(137, 691) + ""; // creo un codice temporaneo
+                            if (lineEdited.Contains("/;/"))
                             {
-                                lstPartecipants.Items.Add(line.Split(';'));
+                                lineEdited = lineEdited.Replace("/;/","/"+code+"/"); // lo sostituisco al ;
+                            }
+
+                            if (lineEdited != "")
+                            {
+                                int id = int.Parse(lineEdited.Split(';')[0]);
+                                string name = lineEdited.Split(';')[1].Replace($"/{code}/",";"); // risostituisco per output
+
+                                _partecipants.Add(id,name);
+
+                                lstPartecipants.Items.Add(name);
                             }
                         }
                     });
@@ -203,6 +224,11 @@ namespace WpfApp_Client
                 }
 
             }
+        }
+
+        private void lstPartecipants_Selected(object sender, RoutedEventArgs e)
+        {
+
         }
     }
 }

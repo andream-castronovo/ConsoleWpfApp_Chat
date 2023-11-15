@@ -36,6 +36,7 @@
                 <Button Content="Connettiti" Click="btnConnect_Click"/>
             </StackPanel>
         </Grid>
+        
         <Grid x:Name="grdChat" d:Visibility="Visible" Visibility="Collapsed">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width=".2*"/>
@@ -49,7 +50,7 @@
                 </Grid.RowDefinitions>
 
                 <Label Content="Lista partecipanti" Grid.Row="0"/>
-                <ListBox x:Name="lstPartecipants" Grid.Row="1"/>
+                <ListBox x:Name="lstPartecipants" Grid.Row="1" Selected="lstPartecipants_Selected"/>
 
 
 
