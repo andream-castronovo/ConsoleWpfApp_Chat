@@ -14,7 +14,7 @@ namespace ConsoleWpfApp_Chat
         // 
 
         static int PORT = 11000;
-        static string IP = "10.1.0.7";
+        static string IP = "192.168.1.61";
         static int MAX_CLIENT = 10;
         static string QUIT_STRING = "<CLOSE><EOF>";
 
@@ -151,6 +151,15 @@ namespace ConsoleWpfApp_Chat
 
                     Broadcast($"Nuovo utente nella chat: {client.Nickname}<EOF>");
                     UpdatePartecipantsList();
+                }
+                else if (msgFromClient.Contains("<INFO>"))
+                {
+                    msgFromClient = msgFromClient.Replace("<INFO>", "").Replace("<EOF>", "");
+                    int id = int.Parse(msgFromClient);
+                    foreach (Client c in _clients)
+                        if (c.ID == id)
+                            client.Handler.Send(Encoding.ASCII.GetBytes($"<INFO>ID:{id};Nome:{c.Nickname.Replace(";","/;/").Replace(":","/:/")};Ingresso:{(c.DataIngresso+"").Replace(":", "/:/")}<EOF>"));
+
                 }
                 else if (msgFromClient == QUIT_STRING)
                 {

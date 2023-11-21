@@ -30,6 +30,9 @@ namespace WpfApp_Client
      *      - Split di . e split di : e controllo int
      *   - Con tasto invio invia il messaggio
      *   - Utente che non inserisce il nickname in modalità anonima
+     *   
+     *  Importante:
+     *      Risolvere problemi vari ignorati durante la programmazione (per esempio quando l'ip in connessione non esiste).
      *  
      */
 
@@ -206,16 +209,36 @@ namespace WpfApp_Client
                                 int id = int.Parse(lineEdited.Split(';')[0]);
                                 string name = lineEdited.Split(';')[1].Replace($"/{code}/",";"); // risostituisco per output
 
-                                // TODO Finire, devo fare che al click dice informazioni sul partecipante
-                                // quindi devo cercare un modo di collegare la listbox e l'id del client.
-
-
-                                //_partecipants.Add(new Tuple<int,string>());
+                                _partecipants.Add(new Tuple<int,string>(id,name));
 
                                 lstPartecipants.Items.Add(name);
+                                
                             }
                         }
                     });
+                }
+                else if (msgFromServer.Contains("<INFO>"))
+                {
+                    //ID:{id};Nome:{c.Nickname};Ingresso:{c.DataIngresso}
+                    string outp = "";
+                    msgFromServer = msgFromServer.Replace("<INFO>", "");
+
+                    Random rnd = new Random();
+                    
+                    string codeSemicolon = SafeToSplit(";", rnd, ref msgFromServer);
+                    string codeColon = SafeToSplit(":", rnd, ref msgFromServer);
+
+                    string[] msgSplit1 = msgFromServer.Split(';');
+                    foreach (string line in msgSplit1)
+                    {
+                        string lineEdited = line.Trim();
+                        //ID:{id}
+                        //Nome:{c.Nickname}
+                        //Ingresso:{c.DataIngresso}
+                        outp += $"{lineEdited.Split(':')[0]}: {lineEdited.Split(':')[1]}\n";
+                    }
+
+                    MessageBox.Show(outp.Replace($"/{codeSemicolon}/",";").Replace($"/{codeColon}/",":"));
                 }
                 else if (msgFromServer != "")
                 {
@@ -228,10 +251,23 @@ namespace WpfApp_Client
             }
         }
 
-        private void lstPartecipants_Selected(object sender, RoutedEventArgs e)
+        private static string SafeToSplit(string whatToChange, Random rSeed, ref string msgFromServer)
         {
-            Tuple<int, string> partecipante = new Tuple<int, string>();
-            MessageBox.Show($"Nome: {}", "Info sul partecipante");
+            string code = rSeed.Next(137, 691) + ""; // creo un codice temporaneo per ;
+            if (msgFromServer.Contains($"/{whatToChange}/"))
+            {
+                msgFromServer = msgFromServer.Replace($"/{whatToChange}/", "/" + code + "/"); // lo sostituisco al ;
+            }
+            return code;
+        }
+
+        private void lstPartecipants_SelectionChanged(object sender, RoutedEventArgs e)
+        {
+            if (lstPartecipants.SelectedIndex == -1)
+                return;
+
+            Tuple<int, string> partecipante = _partecipants[lstPartecipants.SelectedIndex];
+            _connection.Send(Encoding.UTF8.GetBytes($"<INFO>{partecipante.Item1}<EOF>"));
         }
     }
 }

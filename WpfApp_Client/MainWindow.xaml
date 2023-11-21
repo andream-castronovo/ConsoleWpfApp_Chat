@@ -50,7 +50,7 @@
                 </Grid.RowDefinitions>
 
                 <Label Content="Lista partecipanti" Grid.Row="0"/>
-                <ListBox x:Name="lstPartecipants" Grid.Row="1" Selected="lstPartecipants_Selected"/>
+                <ListBox x:Name="lstPartecipants" Grid.Row="1" SelectionChanged="lstPartecipants_SelectionChanged"/>
 
 
 
