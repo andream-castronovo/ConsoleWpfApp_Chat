@@ -14,7 +14,7 @@ namespace ConsoleWpfApp_Chat
         // 
 
         static int PORT = 11000;
-        static string IP = "192.168.1.61";
+        static string IP = "10.1.0.7";
         static int MAX_CLIENT = 10;
         static string QUIT_STRING = "<CLOSE><EOF>";
 
