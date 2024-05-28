@@ -11,10 +11,11 @@ namespace ConsoleWpfApp_Chat
     {
         // Andrea Maria Castronovo 
         //          5°I
-        // 
+        //       29/05/2024
+        // Server che gestisce la chat di gruppo multiclient
 
         static int PORT = 11000;
-        static string IP = "192.168.1.61";
+        static string IP = "127.0.0.1";
         static int MAX_CLIENT = 10;
         static string QUIT_STRING = "<CLOSE><EOF>";
 
@@ -41,7 +42,7 @@ namespace ConsoleWpfApp_Chat
 
         static void Main(string[] args)
         {
-            Console.Title = "Andrea Maria Castronovo - 5°I - 27/09/2023";
+            Console.Title = "Andrea Maria Castronovo - 5°I - 29/05/2024";
             Console.WriteLine("Programma Server");
 
             // Lista di client da gestire
@@ -149,8 +150,11 @@ namespace ConsoleWpfApp_Chat
                     msgFromClient = msgFromClient.Replace("<JOIN>", "").Replace("<EOF>", "");
                     client.Nickname = msgFromClient;
 
+                    client.Handler.Send(Encoding.ASCII.GetBytes("<ID>"+client.ID+"<EOF>"));
                     Broadcast($"Nuovo utente nella chat: {client.Nickname}<EOF>");
+                    
                     UpdatePartecipantsList();
+
                 }
                 else if (msgFromClient.Contains("<INFO>"))
                 {

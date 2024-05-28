@@ -15,30 +15,41 @@ namespace WpfApp_Client
     /// </summary>
     /// 
 
+
+    // Andrea Maria Castronovo
+    // 5°I
+    // 29/05/2024
+    // Client che si connette alla chat di gruppo
+
     /*  
      *  TODO
      *  
-     *   - Aggiunta di (You) nella lista partecipanti
-     *      - Comporta che il server invii al client (You) in aggiunta ad ognuno per il suo
-     *   - Display del proprio nome utente da qualche parte
-     *      - Abbastanza facile
-     *   - Tasto per disconnettersi
-     *      - Sarà praticamente lo stesso codice del Window_Closing
-     *   - Finestra informazioni utente al click nella list box dei partecipanti
-     *      - Comporta che il client avrà un oggetto Utente che avrà ogni volta la lista di tutti con le informazioni di ognuno
-     *   - Controllo dell'IP
-     *      - Split di . e split di : e controllo int
-     *   - Con tasto invio invia il messaggio
-     *   - Utente che non inserisce il nickname in modalità anonima
-     *   
+     *   ✔ Aggiunta di (You) nella lista partecipanti
+     *   ✔ Tasto per disconnettersi
+     *      ✔ Sarà praticamente lo stesso codice del Window_Closing
+     *   ✔ Finestra informazioni utente al click nella list box dei partecipanti
+     *      ✔ Il server gli passa tutto
+     *   ✔ Controllo dell'IP
+     *   ✔ Con tasto invio invia il messaggio
+     *
      *  Importante:
-     *      Risolvere problemi vari ignorati durante la programmazione (per esempio quando l'ip in connessione non esiste).
+     *   ✔ Risolvere problemi vari ignorati durante la programmazione (per esempio quando l'ip in connessione non esiste).
      *  
      */
 
-    
+
     public partial class MainWindow : Window
     {
+        void Errore(string msg)
+        {
+            MessageBox.Show(
+                    msg,
+                    "Errore",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error
+                );
+        }
+
         static string _s = "";
         
         const string QUIT_STRING = "<CLOSE><EOF>";
@@ -46,21 +57,55 @@ namespace WpfApp_Client
         public MainWindow()
         {
             InitializeComponent();
+
+            this.Title = "Client chat - Andrea Maria Castronovo - 5°I - 29/05/2024";
         }
+
+
 
         Socket _connection;
         Thread _listenToServer;
         object _lockConnessione = new object();
         List<Tuple<int, string>> _partecipants;
+        int _id = -1;
 
         private void btnConnect_Click(object sender, RoutedEventArgs e)
         {
+
+            if (txtIp.Text.Trim() == "")
+            {
+                Errore("Non hai scritto nulla nel campo dell'indirizzo");
+                return;
+            }
+            else if (!txtIp.Text.Contains(":"))
+            {
+                Errore("Non hai inserito una porta (simbolo : tra indirizzo IP e porta)!");
+                return;
+            }
+
+            if (txtNick.Text.Trim() == "")
+            {
+                Errore("Non supportiamo utenti senza nome.");
+                return;
+            }
+
+
             // Qui va inserito l'IP del SERVER a cui dobbiamo collegarci, che in questo caso è uguale.
-            IPAddress ipAddress = IPAddress.Parse(txtIp.Text.Split(':')[0]);
+            IPAddress ipAddress;
+            try
+            {
+                ipAddress = IPAddress.Parse(txtIp.Text.Split(':')[0]);
+            }
+            catch (Exception ex)
+            {
+                Errore(ex);
+                return;
+            }
+
 
             // Un end point è la combinazione di ip e porta
             IPEndPoint remoteEndPoint = new IPEndPoint(ipAddress, int.Parse(txtIp.Text.Split(':')[1]));
-
+            
             // Creo la Socket che ascolterà
             if (_connection == null)
             {
@@ -94,11 +139,16 @@ namespace WpfApp_Client
             }
             else
             {
-                MessageBox.Show("Already connected.");
+                MessageBox.Show("Risulti essere già connesso, prova a riavvire l'applicazione.", "Errore", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
+        {
+            Disconnect();
+        }
+
+        private void Disconnect()
         {
             if (_connection != null)
             {
@@ -108,7 +158,7 @@ namespace WpfApp_Client
                 }
                 catch
                 {
-                    
+                    // Non fare nulla, tanto ti stai disconnettendo
                 }
 
                 _connection.Shutdown(SocketShutdown.Both);
@@ -121,17 +171,20 @@ namespace WpfApp_Client
                 lstChat.Items.Clear();
                 lstPartecipants.Items.Clear();
                 txtMessaggio.Text = "";
-
             }
         }
 
         private void btnSend_Click(object sender, RoutedEventArgs e)
         {
+            if (txtMessaggio.Text.Trim() == "")
+                return;
+
             if (_connection != null)
             {
                 try
                 {
                     _connection.Send(Encoding.UTF8.GetBytes(ControllaMessaggio(txtMessaggio.Text) + "<EOF>"));
+                    txtMessaggio.Text = "";
                 }
                 catch (Exception ex)
                 {
@@ -151,7 +204,7 @@ namespace WpfApp_Client
 
         private void HandleSocketException(Exception ex)
         {
-            MessageBox.Show($"{ex.Message}");
+            Errore(ex);
 
             _connection = null;
 
@@ -171,7 +224,7 @@ namespace WpfApp_Client
                 {
                     do
                     {
-                        int byteRecFromServer = _connection.Receive(bytes); // TODO C'è un errore quando chiudo uno dei due
+                        int byteRecFromServer = _connection.Receive(bytes);
                         msgFromServer += Encoding.UTF8.GetString(bytes, 0, byteRecFromServer);
                     } while (!msgFromServer.Contains("<EOF>"));
                 }
@@ -182,8 +235,19 @@ namespace WpfApp_Client
                 }
 
                 msgFromServer = msgFromServer.Replace("<EOF>", "");
-
-                if (msgFromServer.Contains("<LIST>"))
+                if (msgFromServer.Contains("<ID>"))
+                {
+                    msgFromServer = msgFromServer.Replace("<ID>", "");
+                    try
+                    {
+                        _id = int.Parse(msgFromServer);
+                    }
+                    catch (Exception ex)
+                    {
+                        Errore(ex);
+                    }
+                }
+                else if (msgFromServer.Contains("<LIST>"))
                 {
                     msgFromServer = msgFromServer.Replace("<LIST>", "");
                     string[] msgListSplitted = msgFromServer.Split('\n');
@@ -201,18 +265,21 @@ namespace WpfApp_Client
                             string code = rnd.Next(137, 691) + ""; // creo un codice temporaneo
                             if (lineEdited.Contains("/;/"))
                             {
-                                lineEdited = lineEdited.Replace("/;/","/"+code+"/"); // lo sostituisco al ;
+                                lineEdited = lineEdited.Replace("/;/", "/" + code + "/"); // lo sostituisco al ;
                             }
 
                             if (lineEdited != "")
                             {
                                 int id = int.Parse(lineEdited.Split(';')[0]);
-                                string name = lineEdited.Split(';')[1].Replace($"/{code}/",";"); // risostituisco per output
+                                string name = lineEdited.Split(';')[1].Replace($"/{code}/", ";"); // risostituisco per output
 
-                                _partecipants.Add(new Tuple<int,string>(id,name));
+                                if (id == _id)
+                                    name += " (You)";
+
+                                _partecipants.Add(new Tuple<int, string>(id, name));
 
                                 lstPartecipants.Items.Add(name);
-                                
+
                             }
                         }
                     });
@@ -224,7 +291,7 @@ namespace WpfApp_Client
                     msgFromServer = msgFromServer.Replace("<INFO>", "");
 
                     Random rnd = new Random();
-                    
+
                     string codeSemicolon = SafeToSplit(";", rnd, ref msgFromServer);
                     string codeColon = SafeToSplit(":", rnd, ref msgFromServer);
 
@@ -238,7 +305,12 @@ namespace WpfApp_Client
                         outp += $"{lineEdited.Split(':')[0]}: {lineEdited.Split(':')[1]}\n";
                     }
 
-                    MessageBox.Show(outp.Replace($"/{codeSemicolon}/",";").Replace($"/{codeColon}/",":"));
+                    MessageBox.Show(
+                        messageBoxText: outp.Replace($"/{codeSemicolon}/", ";").Replace($"/{codeColon}/", ":"),
+                        caption: "Informazioni partecipante",
+                        button: MessageBoxButton.OK,
+                        icon: MessageBoxImage.Information
+                    );
                 }
                 else if (msgFromServer != "")
                 {
@@ -268,6 +340,32 @@ namespace WpfApp_Client
 
             Tuple<int, string> partecipante = _partecipants[lstPartecipants.SelectedIndex];
             _connection.Send(Encoding.UTF8.GetBytes($"<INFO>{partecipante.Item1}<EOF>"));
+        }
+
+        void Errore(Exception ex)
+        {
+            MessageBox.Show(
+                $"Si è verificato un errore: {ex.Message}",
+                "Errore",
+                MessageBoxButton.OK,
+                MessageBoxImage.Error
+            );
+        }
+
+        private void btnDisconnect_Click(object sender, RoutedEventArgs e)
+        {
+            Disconnect();
+            grdChat.Visibility = Visibility.Collapsed;
+            grdConnect.Visibility = Visibility.Visible;
+        }
+
+       
+        private void txtMessaggio_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Enter)
+            {
+                btnSend_Click (sender, e);
+            }
         }
     }
 }
