@@ -88,6 +88,11 @@ namespace WpfApp_Client
                 Errore("Non supportiamo utenti senza nome.");
                 return;
             }
+            else if (txtNick.Text.Contains(">") || txtNick.Text.Contains("<"))
+            {
+                Errore("Al momento non supportiamo i caratteri \">\" e \"<\" nei nomi.");
+                return;
+            }
 
 
             // Qui va inserito l'IP del SERVER a cui dobbiamo collegarci, che in questo caso è uguale.

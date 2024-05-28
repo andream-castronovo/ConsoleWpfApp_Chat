@@ -199,6 +199,8 @@ namespace ConsoleWpfApp_Chat
             {
                 listParts += $"{c.ID};{c.Nickname.Replace(";","/;/")}\n";
             }
+
+            Console.WriteLine($"INVIO: <LIST>" + listParts + "<EOF>");
             Broadcast($"<LIST>" + listParts + "<EOF>");
         }
         
